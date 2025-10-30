@@ -50,7 +50,9 @@ class Game
       index if move
     end
 
-    WINNING_COMBINATIONS.any? { |combo| combo && moves == combo }
+    WINNING_COMBINATIONS.any? do |combo|
+      combo.all? { |index| moves.include?(index) }
+    end
   end
 
   def swap_players_order
@@ -116,16 +118,13 @@ class Game
 
   def analyze_params_command(command)
     command_type, command_params = command.split(' ')
-
-    begin
-      move_player(strict_to_i(command_params) - 1) if command_type == 'move'
-    rescue ArgumentError
-      warn 'There is a non-integer character, expected only intigers'
-    ensure
-      unless game_over
-        puts
-        input_command
-      end
+    move_player(strict_to_i(command_params) - 1) if command_type == 'move'
+  rescue ArgumentError
+    warn 'There is a non-integer character, expected only intigers'
+  ensure
+    unless game_over
+      puts
+      input_command
     end
   end
 
@@ -166,9 +165,13 @@ class Game
     "It's #{current_player.name}'s turn now!"
   end
 
-  def input_command
+  def pp_info
     puts player_turn
     pp_board
+  end
+
+  def input_command
+    pp_info
     command = ask_command
 
     if COMMANDS.include?(command)
