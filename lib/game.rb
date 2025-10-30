@@ -37,12 +37,20 @@ class Game
     'move' => { params?: true }
   }.freeze
 
-  def handle_win(player)
-    return unless player_win?(player)
+  def players_tie?
+    board.reject { |square| square == '-' }.size == 9
+  end
 
-    puts "Congrats #{player.name}, you won!"
-    pp_board
-    self.game_over = true
+  def handle_outcome(player)
+    if player_win?(player)
+      puts "Congrats #{player.name}, you won!"
+      pp_board
+      self.game_over = true
+    elsif players_tie?
+      puts "It's a tie!"
+      pp_board
+      self.game_over = true
+    end
   end
 
   def player_win?(player)
@@ -65,7 +73,7 @@ class Game
     raise ArgumentError if other_player.moves[position] == true
 
     current_player.move(position)
-    handle_win(current_player)
+    handle_outcome(current_player)
     swap_players_order
   rescue ArgumentError
     warn 'Bad Position'
