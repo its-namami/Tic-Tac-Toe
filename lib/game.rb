@@ -4,7 +4,7 @@ require_relative 'player'
 
 # This is a class that controlls the game and players
 class Game
-  attr_reader :player1, :player2, :current_player
+  attr_reader :player1, :player2, :current_player, :other_player
 
   def initialize
     name_player1 = ask_name('Player 1')
@@ -12,11 +12,14 @@ class Game
     name_player2 = ask_name('Player 2')
     @player2 = Player.new(name_player2)
     @current_player = player1
+    @other_player = player2
 
     input_command
   end
 
   private
+
+  attr_writer :current_player, :other_player
 
   COMMANDS = {
     'stop' => { params?: false },
@@ -25,14 +28,29 @@ class Game
   }.freeze
 
   def move_player(position)
+    raise ArgumentError if other_player.moves[position] == true
+
     current_player.move(position)
+    swap_players_order
   rescue ArgumentError
     puts 'Bad Position!'
   end
 
-  def show_board
-    puts player1.moves
-    puts player2.moves
+  # 0 1 2
+  # 1 2 1
+  # 2 0 0
+  def board
+    puts "Current player: #{current_player}"
+    board = player1.moves.each.with_index.with_object({}) do |(move, index), new_board|
+      new_board[index] = case move
+                         when true then 1
+                         else false
+                         end
+    end
+
+    player2.moves.each.with_index.with_object(board) do |(move, index), new_board|
+      new_board[index] = 2 if move == true
+    end
   end
 
   def end_game
@@ -41,7 +59,7 @@ class Game
 
   def analyze_command(command)
     ask_move if command == 'move'
-    show_board if command == 'show'
+    puts board if command == 'show'
     return end_game if command == 'stop'
 
     puts
@@ -100,5 +118,11 @@ class Game
       warn_bad_input
       input_command
     end
+  end
+
+  def swap_players_order
+    p1 = current_player
+    self.current_player = other_player
+    self.other_player = p1
   end
 end

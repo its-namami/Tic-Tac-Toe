@@ -13,6 +13,8 @@ class Player
     raise ArgumentError unless (0..moves.size).include?(position) && moves[position] == false
 
     moves[position] = true
+
+    position
   end
 
   private
