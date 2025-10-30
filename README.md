@@ -10,7 +10,7 @@ This is a tic-tac-toe game you can play in the console.
 
 ## Demo
 
-![A short demo of tic-tac-toe] (./docs/media/tic-tac-toe.gif)
+![A short demo of tic-tac-toe](./docs/media/tic-tac-toe.gif)
 
 ## Documentation
 
