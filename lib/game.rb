@@ -4,7 +4,7 @@ require_relative 'player'
 
 # This is a class that controlls the game and players
 class Game
-  attr_reader :player1, :player2, :current_player, :other_player
+  attr_reader :player1, :player2
 
   def initialize
     name_player1 = ask_name('Player 1')
@@ -19,7 +19,7 @@ class Game
 
   private
 
-  attr_writer :current_player, :other_player
+  attr_accessor :current_player, :other_player, :game_over
 
   WINNING_COMBINATIONS = [
     [0, 1, 2], # top row
@@ -38,15 +38,38 @@ class Game
     'show' => { params?: false }
   }.freeze
 
+  def handle_win(player)
+    return unless player_win?(player)
+
+    puts "Congrats #{player.name}, you won!"
+    self.game_over = true
+  end
+
+  def player_win?(player)
+    moves = player.moves.each.with_index.filter_map do |move, index|
+      index if move
+    end
+
+    WINNING_COMBINATIONS.any? { |combo| combo && moves == combo }
+  end
+
+  def swap_players_order
+    p1 = current_player
+    self.current_player = other_player
+    self.other_player = p1
+  end
+
   def move_player(position)
     raise ArgumentError if other_player.moves[position] == true
 
     current_player.move(position)
+    handle_win(current_player)
     swap_players_order
   rescue ArgumentError
     warn 'Bad Position'
   end
 
+  # Returns this conceptually
   # 0 1 2
   # 1 2 1
   # 2 0 0
@@ -69,6 +92,8 @@ class Game
     puts board.inspect if command == 'show'
     return end_game if command == 'stop'
 
+    return if game_over
+
     puts
     input_command
   end
@@ -81,13 +106,16 @@ class Game
 
   def analyze_params_command(command)
     command_type, command_params = command.split(' ')
+
     begin
       move_player(strict_to_i(command_params)) if command_type == 'move'
     rescue ArgumentError
       warn 'There is a non-integer character, expected only intigers'
     ensure
-      puts
-      input_command
+      unless game_over
+        puts
+        input_command
+      end
     end
   end
 
@@ -106,7 +134,7 @@ class Game
   end
 
   def ask_command
-    print "Input the command #{available_commands}\n>>> "
+    print "Input a command (#{available_commands.strip})\n>>> "
     command = gets.chomp
     puts
     command
@@ -119,12 +147,17 @@ class Game
   end
 
   def warn(warning = 'Bad Input')
-    print "Warning: #{warning} [PRESS ENTER TO CONTINUE]"
+    puts "Warning: #{warning} [PRESS ENTER TO CONTINUE]"
     gets
     puts
   end
 
+  def player_turn
+    "It's #{current_player.name}'s turn now!"
+  end
+
   def input_command
+    puts player_turn
     command = ask_command
 
     if COMMANDS.include?(command)
@@ -135,11 +168,5 @@ class Game
       warn
       input_command
     end
-  end
-
-  def swap_players_order
-    p1 = current_player
-    self.current_player = other_player
-    self.other_player = p1
   end
 end
