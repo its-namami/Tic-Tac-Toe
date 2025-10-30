@@ -34,14 +34,14 @@ class Game
 
   COMMANDS = {
     'stop' => { params?: false },
-    'move' => { params?: true },
-    'show' => { params?: false }
+    'move' => { params?: true }
   }.freeze
 
   def handle_win(player)
     return unless player_win?(player)
 
     puts "Congrats #{player.name}, you won!"
+    pp_board
     self.game_over = true
   end
 
@@ -69,16 +69,26 @@ class Game
     warn 'Bad Position'
   end
 
-  # Returns this conceptually
-  # 0 1 2
-  # 1 2 1
-  # 2 0 0
+  def pp_board
+    puts "\nCurrent board"
+
+    board.each.with_index do |square, index|
+      if ((index + 1) % 3).zero?
+        puts square
+      else
+        print "#{square} "
+      end
+    end
+
+    puts
+  end
+
   def board
     player1.moves.zip(player2.moves).map do |a, b|
       if a
-        1
+        'x'
       else
-        b ? 2 : 0
+        b ? 'o' : '-'
       end
     end
   end
@@ -89,7 +99,7 @@ class Game
 
   def analyze_command(command)
     ask_move if command == 'move'
-    puts board.inspect if command == 'show'
+    pp_board if command == 'show'
     return end_game if command == 'stop'
 
     return if game_over
@@ -108,7 +118,7 @@ class Game
     command_type, command_params = command.split(' ')
 
     begin
-      move_player(strict_to_i(command_params)) if command_type == 'move'
+      move_player(strict_to_i(command_params) - 1) if command_type == 'move'
     rescue ArgumentError
       warn 'There is a non-integer character, expected only intigers'
     ensure
@@ -120,10 +130,10 @@ class Game
   end
 
   def ask_move
-    print "Write the name for the position you wanna move\n>>> "
-    position = gets.to_i
+    print "Write the number of the position you wanna move\n>>> "
+    position = gets.chomp
     puts
-    move_player(position)
+    move_player(strict_to_i(position) - 1)
   end
 
   def ask_name(player)
@@ -158,6 +168,7 @@ class Game
 
   def input_command
     puts player_turn
+    pp_board
     command = ask_command
 
     if COMMANDS.include?(command)
