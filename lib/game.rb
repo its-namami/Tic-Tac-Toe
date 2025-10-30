@@ -21,6 +21,17 @@ class Game
 
   attr_writer :current_player, :other_player
 
+  WINNING_COMBINATIONS = [
+    [0, 1, 2], # top row
+    [3, 4, 5], # middle row
+    [6, 7, 8], # bottom row
+    [0, 3, 6], # left column
+    [1, 4, 7], # middle column
+    [2, 5, 8], # right column
+    [0, 4, 8], # diagonal
+    [2, 4, 6]  # other diagonal
+  ].freeze
+
   COMMANDS = {
     'stop' => { params?: false },
     'move' => { params?: true },
@@ -33,23 +44,19 @@ class Game
     current_player.move(position)
     swap_players_order
   rescue ArgumentError
-    puts 'Bad Position!'
+    warn 'Bad Position'
   end
 
   # 0 1 2
   # 1 2 1
   # 2 0 0
   def board
-    puts "Current player: #{current_player}"
-    board = player1.moves.each.with_index.with_object({}) do |(move, index), new_board|
-      new_board[index] = case move
-                         when true then 1
-                         else false
-                         end
-    end
-
-    player2.moves.each.with_index.with_object(board) do |(move, index), new_board|
-      new_board[index] = 2 if move == true
+    player1.moves.zip(player2.moves).map do |a, b|
+      if a
+        1
+      else
+        b ? 2 : 0
+      end
     end
   end
 
@@ -59,19 +66,29 @@ class Game
 
   def analyze_command(command)
     ask_move if command == 'move'
-    puts board if command == 'show'
+    puts board.inspect if command == 'show'
     return end_game if command == 'stop'
 
     puts
     input_command
   end
 
-  def analyze_params_command(command)
-    command_type, command_params = command.split(':')
-    move_player(command_params.to_i) if command_type == 'move'
+  def strict_to_i(str)
+    raise ArgumentError unless str.match?(/\A\d+\z/)
 
-    puts
-    input_command
+    str.to_i
+  end
+
+  def analyze_params_command(command)
+    command_type, command_params = command.split(' ')
+    begin
+      move_player(strict_to_i(command_params)) if command_type == 'move'
+    rescue ArgumentError
+      warn 'There is a non-integer character, expected only intigers'
+    ensure
+      puts
+      input_command
+    end
   end
 
   def ask_move
@@ -101,8 +118,8 @@ class Game
     end
   end
 
-  def warn_bad_input
-    print 'Warning: Bad Input [PRESS ENTER TO CONTINUE]'
+  def warn(warning = 'Bad Input')
+    print "Warning: #{warning} [PRESS ENTER TO CONTINUE]"
     gets
     puts
   end
@@ -112,10 +129,10 @@ class Game
 
     if COMMANDS.include?(command)
       analyze_command(command)
-    elsif COMMANDS.select { |_, v| v[:params?] }.include?(command.split(':')[0])
+    elsif COMMANDS.select { |_, v| v[:params?] }.include?(command.split(' ')[0])
       analyze_params_command(command)
     else
-      warn_bad_input
+      warn
       input_command
     end
   end
