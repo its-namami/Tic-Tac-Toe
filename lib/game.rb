@@ -20,7 +20,7 @@ class Game
 
   COMMANDS = {
     'stop' => { params?: false },
-    'move' => { params?: false },
+    'move' => { params?: true },
     'show' => { params?: false }
   }.freeze
 
@@ -51,6 +51,9 @@ class Game
   def analyze_params_command(command)
     command_type, command_params = command.split(':')
     move_player(command_params.to_i) if command_type == 'move'
+
+    puts
+    input_command
   end
 
   def ask_move
@@ -91,7 +94,7 @@ class Game
 
     if COMMANDS.include?(command)
       analyze_command(command)
-    elsif COMMANDS.select { |cmd| COMMANDS[cmd][:params?] == true }.include?(command.split(':')[0])
+    elsif COMMANDS.select { |_, v| v[:params?] }.include?(command.split(':')[0])
       analyze_params_command(command)
     else
       warn_bad_input
