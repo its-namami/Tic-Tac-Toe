@@ -119,7 +119,7 @@ class Game
   end
 
   def strict_to_i(str)
-    raise ArgumentError unless str.match?(/\A\d+\z/)
+    raise ArgumentError unless !str.nil? && str.match?(/\A\d+\z/)
 
     str.to_i
   end
